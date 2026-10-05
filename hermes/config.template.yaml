@@ -1,0 +1,93 @@
+# Hermes config for the Operator (project-management) agent.
+# Written for Hermes Agent v0.21.5 (release tag v2026.9.24). Check `hermes config check` after any upgrade.
+#
+# deploy/setup.sh renders this file into ~/.hermes/config.yaml. It fills in each double-underscore placeholder with a
+# value from ~/.operator/agent.env. Do not edit ~/.hermes/config.yaml by hand on a box managed by
+# setup.sh: the next run re-renders it (the previous copy is kept in ~/.hermes/backups/).
+#
+# This file holds NO secrets. API keys and tokens live in ~/.hermes/.env, which setup.sh writes.
+# Hermes reads OPENROUTER_API_KEY from there. MCP servers can reference other secrets as ${VAR}.
+
+# IANA timezone, for example Europe/London. It drives the agent clock and every cron schedule.
+timezone: "__TIMEZONE__"
+
+model:
+  provider: openrouter
+  # An OpenRouter model id in "vendor/model" form. Pick a current tool-calling model from
+  # openrouter.ai/models and set OPERATOR_MODEL in agent.env. The key comes from OPENROUTER_API_KEY.
+  default: "__OPERATOR_MODEL__"
+
+toolsets:
+  - hermes-cli
+
+agent:
+  # Tool permissions. Hermes removes these toolsets everywhere: CLI, every gateway platform, cron
+  # jobs and delegated children (`agent.disabled_toolsets` is applied last).
+  #
+  # Default for a PM agent (setup.sh fills the list in from agent.env):
+  #   terminal, code_execution  OFF. With a shell or code execution the agent can do anything the
+  #                             OS user can, including editing its own config. A PM agent rarely
+  #                             needs them. Opt in with OPERATOR_ENABLE_SHELL=true.
+  #   file                      ON, but writes are confined to the vault. setup.sh sets
+  #                             HERMES_WRITE_SAFE_ROOT to the vault in ~/.hermes/.env, so
+  #                             write_file and patch are hard-blocked anywhere else. Reads are not
+  #                             confined. The vault is the agent's working memory, so it needs
+  #                             write access there. Set OPERATOR_FILE_ACCESS=off to remove file
+  #                             tools completely (chat and drafting only).
+  #   browser, computer_use     OFF. They would drive this machine's own browser and desktop.
+  #   cronjob                   OFF. The owner registers routines with `hermes cron` instead.
+  #   delegation                OFF. Sub-agents multiply cost and act out of the owner's sight.
+  #   image_gen, video_gen, tts OFF. Not needed for project management.
+  disabled_toolsets: [__DISABLED_TOOLSETS__]
+  reasoning_effort: medium
+
+# Snapshot files before write_file and patch change them, so `/rollback` can undo a bad write.
+checkpoints:
+  enabled: true
+  max_snapshots: 50
+  retention_days: 14
+
+# Manual approvals: every flagged command and every write tool on an `untrusted` MCP server asks a
+# human first. An unanswered prompt is denied after `timeout` seconds. Cron jobs cannot wait for a
+# human, so `cron_mode: deny` makes them skip flagged actions.
+approvals:
+  mode: manual
+  timeout: 300
+  cron_mode: deny
+
+security:
+  redact_secrets: true
+  allow_private_urls: false
+
+skills:
+  # This repo's skills. Hermes scans this directory as well as ~/.hermes/skills/.
+  external_dirs:
+    - "__REPO_DIR__/skills"
+  # Stage every agent edit to a skill for owner review (/skills pending, /skills approve <id>).
+  # External skill dirs are not write-protected, so this keeps the agent from rewriting its playbook.
+  write_approval: true
+  guard_agent_created: true
+  # Values handed to the project-management skills when they load (metadata.hermes.config).
+  config:
+    operator:
+      vault_path: "__VAULT_DIR__"
+      pm_system: "__PM_SYSTEM__"
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  # true = the owner approves each memory write. Leave false while the agent is learning the
+  # owner's preferences, then turn it on if memory starts to drift.
+  write_approval: false
+
+cron:
+  # Cron-run agents may not schedule further jobs (no unattended scheduling loops).
+  allow_agent_scheduling: false
+
+updates:
+  # This box runs a pinned Hermes version. Upgrade on purpose (see README), not on a banner prompt.
+  check: false
+
+# MCP servers (for example the connector for your PM system) are not defined here. Put them in
+# ~/.operator/mcp_servers.yaml and setup.sh appends that file to the rendered config, so a re-run
+# keeps them. See README "Connecting your PM system".

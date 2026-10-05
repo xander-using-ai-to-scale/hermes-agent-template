@@ -1,0 +1,19 @@
+# Secrets and local settings: never commit
+.env
+*.env
+!agent.example.env
+agent.env
+mcp_servers.yaml
+config.yaml
+!hermes/config.template.yaml
+
+# Logs and runtime state
+*.log
+logs/
+.hermes/
+
+# Real vault data (vault-template/ and examples/ are tracked on purpose)
+operator-vault/
+vault/
+*.vault/
+.obsidian/
