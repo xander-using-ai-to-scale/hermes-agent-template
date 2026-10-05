@@ -2,7 +2,22 @@
 
 Company-neutral operating procedure for a Hermes PM agent. Customize the system names and cadence before use.
 
+This is the human-readable playbook. The agent runs it through the skills in `skills/project-management/`, each of which turns one section below into a step-by-step procedure with inputs, an output format, approval gates and verification:
+
+| Playbook section | Skill |
+|---|---|
+| 1–3. Intake, check before creating, plan | `project-intake` |
+| 4. Track and maintain (daily view) | `daily-status-brief` |
+| 4. Blockers and slipping dates | `blocker-escalation` |
+| 5. Meeting and conversation follow-up | `meeting-follow-up` |
+| 6. Status reporting | `weekly-report` (weekly or monthly) |
+| 7. Project closeout | `project-closeout` |
+
+Change the playbook and the matching skill together, so the agent and the humans follow the same process.
+
 ## 1. Work intake
+
+→ Skill: `project-intake`
 
 For each request capture, as available:
 
@@ -43,6 +58,8 @@ Before any write, check the target, fields, and scope. For consequential or exte
 
 ## 5. Meeting and conversation follow-up
 
+→ Skill: `meeting-follow-up`
+
 When authorized to process a transcript or conversation:
 
 1. Identify decisions, action items, owners, dates, blockers, and unresolved questions.
@@ -56,6 +73,8 @@ Do not treat attendance, a calendar booking, or a transcript mention as proof th
 
 ## 6. Status reporting
 
+→ Skills: `daily-status-brief` (daily), `weekly-report` (weekly or monthly), `blocker-escalation` (anything blocked)
+
 A useful report answers:
 
 - What outcome matters now?
@@ -68,6 +87,8 @@ A useful report answers:
 Keep routine reports brief. Escalate material changes to scope, deadline, cost, capacity, quality, privacy, legal risk, customer experience, or reputation.
 
 ## 7. Project closeout
+
+→ Skill: `project-closeout`
 
 Close only after deliverables pass acceptance criteria and the record is verified. Capture final links, unresolved follow-up, lessons worth reusing, and the closure decision. Archive according to the organization's retention rules; do not delete material records without explicit authorization.
 
@@ -84,4 +105,4 @@ Close only after deliverables pass acceptance criteria and the record is verifie
 
 ## Integration notes
 
-This playbook does not assume a PM platform or tool connector. Select the organization's system of record, configure least-privilege access, document approved operations, and test reads before writes. Keep secrets in the deployment's approved secret store and out of prompts, logs, and version control.
+This playbook does not assume a PM platform or tool connector. By default the agent's vault (`vault-template/`, a PARA structure) is the system of record. To use another PM platform, connect it as an MCP server (see README, "Connecting your PM system"), configure least-privilege access, document approved operations, and test reads before writes. Keep secrets in the deployment's approved secret store and out of prompts, logs, and version control.
